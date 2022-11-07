@@ -25,7 +25,31 @@ def get_listings_from_search_results(html_file):
         ('Loft in Mission District', 210, '1944564'),  # example
     ]
     """
-    pass
+    f = open(html_file)
+
+    title_list = []
+    id_list = []
+    price_list = []
+
+    soup = BeautifulSoup(f, 'html.parser')
+    info = soup.find_all('div', class_ = 't1jojoys dir dir-ltr')
+    price = soup.find_all('span', class_ = 'a8jt5op dir dir-ltr')
+
+    for item in price: 
+        if (item.text.strip()[0] == '$'):
+            price_list.append(int(item.text.strip()[1:4]))
+            
+    for item in info:
+        id_list.append(item.get('id')[6:])
+        title_list.append(item.text.strip())
+
+    final_list = []
+    for i in range(len(title_list)): 
+        tup = (title_list[i], price_list[i], id_list[i])
+        final_list.append(tup)
+
+    f.close()
+    return final_list 
 
 
 def get_listing_information(listing_id):
@@ -52,7 +76,27 @@ def get_listing_information(listing_id):
         number of bedrooms
     )
     """
-    pass
+    filename = 'html_files/listing_' + listing_id + '.html'
+    f = open(filename)
+
+    soup = BeautifulSoup(f, 'html.parser')
+    policy_number = soup.find('li', class_ = 'f19phm7j dir dir-ltr')
+    policy_number = policy_number.text.strip()[14:]
+    policy_number = policy_number.split()
+    policy_number = policy_number[0]
+        
+    room_type = soup.find('h2', class_ = '_14i3z6h')
+    room_type = room_type.text.strip()
+    room_type = room_type.split()
+    room_type = room_type[0] + " Room"
+
+    num_rooms = soup.find('li', class_ = 'l7n4lsf')
+    num_rooms = int(num_rooms.text.strip()[0])
+   
+    f.close()
+
+    tup = (policy_number, room_type, num_rooms)
+    return tup 
 
 
 def get_detailed_listing_database(html_file):
@@ -69,8 +113,15 @@ def get_detailed_listing_database(html_file):
         ...
     ]
     """
-    pass
+    listing_list = get_listings_from_search_results(html_file)
+    final_list = []
 
+    for item in listing_list: 
+        info = get_listing_information(item[2])
+        final_list.append(item + info)
+
+    return final_list
+    
 
 def write_csv(data, filename):
     """
@@ -94,7 +145,17 @@ def write_csv(data, filename):
 
     This function should not return anything.
     """
-    pass
+    fout = open(filename, 'w')
+    fout.write("Listing Title,Cost,Listing ID,Policy Number,Place Type,Number of Bedrooms")
+    fout.write('\n')
+    data = sorted(data, key = lambda t:t[1])
+    for item in data: 
+        line = ""
+        for datum in item: 
+            line += str(datum) + ","
+        fout.write(line.rstrip(','))
+        fout.write('\n')
+
 
 
 def check_policy_numbers(data):
