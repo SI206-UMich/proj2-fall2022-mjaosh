@@ -155,6 +155,7 @@ def write_csv(data, filename):
             line += str(datum) + ","
         fout.write(line.rstrip(','))
         fout.write('\n')
+    fout.close()
 
 
 
@@ -177,7 +178,22 @@ def check_policy_numbers(data):
     ]
 
     """
-    pass
+    policy_str = ""
+    policy_list = []
+    incorrect_list = []
+    for item in data: 
+        policy_str += (item[3] + " ") 
+        policy_list.append(item[3])
+
+    regex = 'STR-000\d{4}|20\d{2}-00\d{4}STR'
+
+    x = re.findall(regex, policy_str)
+    for num in policy_list:
+        if num not in x:
+            incorrect_list.append(num)
+    return incorrect_list
+
+
 
 
 def extra_credit(listing_id):
