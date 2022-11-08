@@ -1,3 +1,5 @@
+#Mariam Jaoshvili - Worked with Ansley Lewis and Casey Sestanovich
+
 from xml.sax import parseString
 from bs4 import BeautifulSoup
 import re
