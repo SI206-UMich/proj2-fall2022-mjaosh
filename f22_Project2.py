@@ -83,7 +83,12 @@ def get_listing_information(listing_id):
     policy_number = soup.find('li', class_ = 'f19phm7j dir dir-ltr')
     policy_number = policy_number.text.strip()[14:]
     policy_number = policy_number.split()
-    policy_number = policy_number[0]
+    if ('pending' in policy_number or 'Pending' in policy_number):
+        policy_number = 'Pending'
+    elif(policy_number[0] == 'License'):
+        policy_number = 'Exempt'
+    else:
+        policy_number = policy_number[0]
         
     room_type = soup.find('h2', class_ = '_14i3z6h')
     room_type = room_type.text.strip()
@@ -184,17 +189,19 @@ def check_policy_numbers(data):
     """
     policy_str = ""
     policy_list = []
+    id_list = []
     incorrect_list = []
     for item in data: 
         policy_str += (item[3] + " ") 
         policy_list.append(item[3])
+        id_list.append(item[2])
 
-    regex = 'STR-000\d{4}|20\d{2}-00\d{4}STR'
+    regex = 'STR-000\d{4}|20\d{2}-00\d{4}STR|Pending|Exempt'
 
     x = re.findall(regex, policy_str)
-    for num in policy_list:
-        if num not in x:
-            incorrect_list.append(num)
+    for i in range(len(policy_list)):
+        if policy_list[i] not in x:
+            incorrect_list.append(id_list[i])
     return incorrect_list
 
 
@@ -287,7 +294,7 @@ class TestCases(unittest.TestCase):
         # 'Guest suite in Mission District', 238, '32871760', 'STR-0004707', 'Entire Room', 1
         self.assertEqual(detailed_database[-1], ('Guest suite in Mission District', 238, '32871760', 'STR-0004707', 'Entire Room', 1))
 
-        pass
+
 
     def test_write_csv(self):
         # call get_detailed_listing_database on "html_files/mission_district_search_results.html"
@@ -304,12 +311,18 @@ class TestCases(unittest.TestCase):
         # check that there are 21 lines in the csv
         self.assertEqual(len(csv_lines), 21)
         # check that the header row is correct
+        correct_list = ['Listing Title','Cost','Listing ID','Policy Number','Place Type','Number of Bedrooms']
+        self.assertEqual(csv_lines[0], correct_list)
+        
 
         # check that the next row is Private room in Mission District,82,51027324,Pending,Private Room,1
+        correct_list = ['Private room in Mission District','82','51027324','Pending','Private Room','1']
+        self.assertEqual(csv_lines[1], correct_list)
 
         # check that the last row is Apartment in Mission District,399,28668414,Pending,Entire Room,2
+        correct_list = ['Apartment in Mission District','399','28668414','Pending','Entire Room','2']
 
-        pass
+        
 
     def test_check_policy_numbers(self):
         # call get_detailed_listing_database on "html_files/mission_district_search_results.html"
@@ -320,11 +333,13 @@ class TestCases(unittest.TestCase):
         # check that the return value is a list
         self.assertEqual(type(invalid_listings), list)
         # check that there is exactly one element in the string
+        self.assertEqual(len(invalid_listings),1)
 
         # check that the element in the list is a string
+        self.assertEqual(type(invalid_listings[0]),str)
 
         # check that the first element in the list is '16204265'
-        pass
+        self.assertEqual(invalid_listings[0], '16204265')
 
 
 if __name__ == '__main__':
